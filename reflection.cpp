@@ -170,7 +170,7 @@ void datainitail(char *gm3file,HYBRID_MESH& mesh){
             }
             data_curve[k].project(mesh.nodes[i].coord,&coord,&cls_u);
             distance=mesh.nodes[i].coord.getDistance(coord);
-             cout<<"k="<<k<<"curve:"<<distance<<endl;
+//             cout<<"k="<<k<<"curve:"<<distance<<endl;
 
             ref_table[i].curve_id=k;
             ref_table[i].node_id=i;
@@ -241,26 +241,26 @@ int start_node;
 int end_node;
 int pre_node=-1;
 DiscretPoint current_node;
-for(auto j=discretsolid.discretPoints[0].linkedPoints.begin();j!=discretsolid.discretPoints[0].linkedPoints.end();++j){
-    cout<<*j<<endl;
-}
+//for(auto j=discretsolid.discretPoints[0].linkedPoints.begin();j!=discretsolid.discretPoints[0].linkedPoints.end();++j){
+//    cout<<*j<<endl;
+//}
 for(int i=0;i<nc;++i){
 temp.clear();
 start_node=curve_head[i][0];
 end_node=curve_head[i][1];
-cout<<"start_node  "<<start_node<<"   end_node  "<<end_node<<endl;
+//cout<<"start_node  "<<start_node<<"   end_node  "<<end_node<<endl;
 current_node=discretsolid.discretPoints[start_node];
 temp.push_back(start_node);
 while(current_node.index!=end_node){
-cout<<current_node.index<<endl;
+//cout<<current_node.index<<endl;
    for(auto j=current_node.linkedPoints.begin();j!=current_node.linkedPoints.end();++j){
-                     cout<<"neig  "<<*j<<endl;
+      //               cout<<"neig  "<<*j<<endl;
        data_curve[i].project(mesh.nodes[*j].coord,&coord,&cls_u);
        distance=mesh.nodes[*j].coord.getDistance(coord);
-        cout<<"pre "<<pre_node<<endl;
+    //    cout<<"pre "<<pre_node<<endl;
        if(distance<0.05&&(*j)!=pre_node){
        temp.push_back(*j);
-       cout<<"add "<<*j<<endl;
+  //     cout<<"add "<<*j<<endl;
        pre_node=current_node.index;
        current_node=discretsolid.discretPoints[*j];
        break;
@@ -296,11 +296,17 @@ for(int i=0;i<gbsolid.nloops_G;++i){
     for(auto j=loop[i].begin();j!=loop[i].end();++j){
         current_node=discretsolid.discretPoints[*j];
          for(auto k=current_node.linkedPoints.begin();k!=current_node.linkedPoints.end();++k)
-          {  data_surface[i].project(mesh.nodes[*k].coord,&u,&v);
+          {
+                if(loop[i].find(*k)==loop[i].end()){
+             data_surface[i].project(mesh.nodes[*k].coord,&u,&v);
             data_surface[i].param_to_coord(u,v,&coord);
-            distance=mesh.nodes[i].coord.getDistance(coord);
+            distance=mesh.nodes[*k].coord.getDistance(coord);
+            cout<<"loop="<<i<<"  node="<<*k<<"  distance= "<<distance<<endl;
             if(distance<0.05)
+               {
                 _temp.insert(*k);
+               }
+          }
          }
     }
     iner_loop.push_back(_temp);
@@ -312,6 +318,12 @@ for(int i=0;i<gbsolid.nloops_G;++i){
 //     cout<<" "<<*j;
 // }
 // cout<<endl;
+}
+for(int i=0;i<4;++i){
+    cout<<"     "<<endl;
+    for(auto j=iner_loop[i].begin();j!=iner_loop[i].end();++j){
+        cout<<" "<<*j;
+    }
 }
 
     cout<<"reflection success!"<<endl;
