@@ -6,7 +6,7 @@ table _table;
 FergusonSurface *data_surface;
 FergusonCurve *data_curve;
 GBSolid gbsolid;
-DiscretSolid dssolid;
+DiscretSolid discretsolid;
 HYBRID_MESH mesh;
 temp *ref_table;
 map<int,int> face_patch;
@@ -138,56 +138,56 @@ void datainitail(char *gm3file,HYBRID_MESH& mesh){
 
 
 
-//      suanfa 2
-//    for(int i=0;i<mesh.NumNodes;++i){
-//        min==DBL_MAX;
-//        k=0;
-//        for(int j=0;j<nf;++j){
-//            data_surface[j].project(mesh.nodes[i].coord,&u,&v);
-//            data_surface[j].param_to_coord(u,v,&coord);
-//            distance=mesh.nodes[i].coord.getDistance(coord);
-//            if(distance<=vol){
-//                f[m]=j;
-//                m++;
-//                k=j;
-//            }
-//           if(distance<min){
-//                min=distance;
-//                k=j;
-//            }
-//        }
-//      //  cout<<"distance:"<<min<<endl;
-//      //   cout<<m<<endl; //distance has problem
-//        if(m>=2){
-//            min=DBL_MAX;
-//            for(int j=0;j<nc;++j){
-//                data_curve[j].project(mesh.nodes[i].coord,&coord,&cls_u);
-//                distance=mesh.nodes[i].coord.getDistance(coord);
-//                if(distance<min){
-//                     min=distance;
-//                     k=j;
-//                 }
-//            }
-//            data_curve[k].project(mesh.nodes[i].coord,&coord,&cls_u);
-//            distance=mesh.nodes[i].coord.getDistance(coord);
-//             cout<<"k="<<k<<"curve:"<<distance<<endl;
+      //suanfa 2
+    for(int i=0;i<mesh.NumNodes;++i){
+        min==DBL_MAX;
+        k=0;
+        for(int j=0;j<nf;++j){
+            data_surface[j].project(mesh.nodes[i].coord,&u,&v);
+            data_surface[j].param_to_coord(u,v,&coord);
+            distance=mesh.nodes[i].coord.getDistance(coord);
+            if(distance<=vol){
+                f[m]=j;
+                m++;
+                k=j;
+            }
+           if(distance<min){
+                min=distance;
+                k=j;
+            }
+        }
+      //  cout<<"distance:"<<min<<endl;
+      //   cout<<m<<endl; //distance has problem
+        if(m>=2){
+            min=DBL_MAX;
+            for(int j=0;j<nc;++j){
+                data_curve[j].project(mesh.nodes[i].coord,&coord,&cls_u);
+                distance=mesh.nodes[i].coord.getDistance(coord);
+                if(distance<min){
+                     min=distance;
+                     k=j;
+                 }
+            }
+            data_curve[k].project(mesh.nodes[i].coord,&coord,&cls_u);
+            distance=mesh.nodes[i].coord.getDistance(coord);
+             cout<<"k="<<k<<"curve:"<<distance<<endl;
 
-//            ref_table[i].curve_id=k;
-//            ref_table[i].node_id=i;
-//        }
-//        else{
+            ref_table[i].curve_id=k;
+            ref_table[i].node_id=i;
+        }
+        else{
 
-//            data_surface[k].project(mesh.nodes[i].coord,&u,&v);
-//            data_surface[k].param_to_coord(u,v,&coord);
-//            distance=mesh.nodes[i].coord.getDistance(coord);
-//          //  cout<<"k="<<k<<"face:"<<distance<<endl;
+            data_surface[k].project(mesh.nodes[i].coord,&u,&v);
+            data_surface[k].param_to_coord(u,v,&coord);
+            distance=mesh.nodes[i].coord.getDistance(coord);
+          //  cout<<"k="<<k<<"face:"<<distance<<endl;
 
-//             ref_table[i].patch_id=k;
-//             ref_table[i].node_id=i;
-//        }
-//         m=0;
-//         min=DBL_MAX;
-//    }
+             ref_table[i].patch_id=k;
+             ref_table[i].node_id=i;
+        }
+         m=0;
+         min=DBL_MAX;
+    }
 
 
 
@@ -195,12 +195,123 @@ void datainitail(char *gm3file,HYBRID_MESH& mesh){
 
 //suan fa 3
 vector<vector<int>> curve_head;
-for(int i=0;i<mesh.NumNodes;++i){
-    for(int j=0;j<nc;++j){
-        if(data_curve[j].start_coord().getDistance(mesh.nodes[i].coord)<0.00001){
-           cout<<"ok"<<endl;
+vector<int> temp;
+for(int i=0;i<nc;++i){
+    for(int j=0;j<mesh.NumNodes;++j){
+        if(data_curve[i].start_coord().getDistance(mesh.nodes[j].coord)<0.00001){
+            temp.push_back(j);
+        }
+        if(data_curve[i].end_coord().getDistance(mesh.nodes[j].coord)<0.00001){
+            temp.push_back(j);
         }
     }
+    curve_head.push_back(temp);
+    temp.clear();
+}
+discretsolid.NumFacets=mesh.NumTris;
+discretsolid.NumPoints=mesh.NumNodes;
+discretsolid.discreteFacets=new DiscretFacet[discretsolid.NumFacets];
+discretsolid.discretPoints=new DiscretPoint[discretsolid.NumPoints];
+for(int i=0;i<discretsolid.NumFacets;++i){
+    discretsolid.discretPoints[i].index=i;
+           discretsolid.discretPoints[i].x=mesh.nodes[i].coord.x;
+           discretsolid.discretPoints[i].y=mesh.nodes[i].coord.y;
+           discretsolid.discretPoints[i].z=mesh.nodes[i].coord.z;
+}
+
+
+for(int i=0;i<discretsolid.NumFacets;++i){
+    discretsolid.discreteFacets[i].index=i;
+    discretsolid.discreteFacets[i].points[0]=mesh.pTris[i].vertices[0];
+    discretsolid.discreteFacets[i].points[1]=mesh.pTris[i].vertices[1];
+    discretsolid.discreteFacets[i].points[2]=mesh.pTris[i].vertices[2];
+}
+buildRelationshipByPoint(&discretsolid);
+buildFacetRelationshipByEdge(&discretsolid);
+
+
+for(int i=0;i<discretsolid.NumPoints;++i){
+     if(discretsolid.discretPoints[i].linkedPoints.size()!=discretsolid.discretPoints[i].linkedFacets.size()){
+         discretsolid.discretPoints[i].linkedPoints.erase(0);  //problem?
+     }
+}
+
+vector<vector<int>> curve_node;
+int start_node;
+int end_node;
+int pre_node=-1;
+DiscretPoint current_node;
+for(auto j=discretsolid.discretPoints[0].linkedPoints.begin();j!=discretsolid.discretPoints[0].linkedPoints.end();++j){
+    cout<<*j<<endl;
+}
+for(int i=0;i<nc;++i){
+temp.clear();
+start_node=curve_head[i][0];
+end_node=curve_head[i][1];
+cout<<"start_node  "<<start_node<<"   end_node  "<<end_node<<endl;
+current_node=discretsolid.discretPoints[start_node];
+temp.push_back(start_node);
+while(current_node.index!=end_node){
+cout<<current_node.index<<endl;
+   for(auto j=current_node.linkedPoints.begin();j!=current_node.linkedPoints.end();++j){
+                     cout<<"neig  "<<*j<<endl;
+       data_curve[i].project(mesh.nodes[*j].coord,&coord,&cls_u);
+       distance=mesh.nodes[*j].coord.getDistance(coord);
+        cout<<"pre "<<pre_node<<endl;
+       if(distance<0.05&&(*j)!=pre_node){
+       temp.push_back(*j);
+       cout<<"add "<<*j<<endl;
+       pre_node=current_node.index;
+       current_node=discretsolid.discretPoints[*j];
+       break;
+   }
+}
+}
+pre_node=-1;
+curve_node.push_back(temp);
+}
+
+for(int i=0;i<curve_node.size();++i){
+    cout<<"curve_id"<<i;
+    for(int j=0;j<curve_node[i].size();++j)
+    cout<<"node "<<curve_node[i][j]<<"  ";
+    cout<<endl;
+}
+vector<set<int>> iner_loop;
+vector<set<int>> loop;
+set<int> _temp;
+for(int i=0;i<gbsolid.nloops_G;++i){
+    _temp.clear();
+     for(int j=0;j<gbsolid.loop_G[i].nlc;++j){
+        for(int k=0;k<curve_node[gbsolid.loop_G[i].cp_t[j]->index].size();++k){
+            int n=curve_node[gbsolid.loop_G[i].cp_t[j]->index][k];
+            _temp.insert(n);
+        }
+    }
+    loop.push_back(_temp);
+}
+
+for(int i=0;i<gbsolid.nloops_G;++i){
+    _temp.clear();
+    for(auto j=loop[i].begin();j!=loop[i].end();++j){
+        current_node=discretsolid.discretPoints[*j];
+         for(auto k=current_node.linkedPoints.begin();k!=current_node.linkedPoints.end();++k)
+          {  data_surface[i].project(mesh.nodes[*k].coord,&u,&v);
+            data_surface[i].param_to_coord(u,v,&coord);
+            distance=mesh.nodes[i].coord.getDistance(coord);
+            if(distance<0.05)
+                _temp.insert(*k);
+         }
+    }
+    iner_loop.push_back(_temp);
+}
+for(int i=0;i<gbsolid.nloops_G;++i){
+ cout<<"loop_size "<<i<<" "<<loop[i].size()<<endl;
+ cout<<"iner_loop_size "<<i<<" "<<iner_loop[i].size()<<endl;
+// for(auto j=loop[i].begin();j!=loop[i].end();++j){
+//     cout<<" "<<*j;
+// }
+// cout<<endl;
 }
 
     cout<<"reflection success!"<<endl;
@@ -215,6 +326,7 @@ for(int i=0;i<mesh.NumNodes;++i){
     }
 
 }  //#ok
+
 
 table::table()
 {
