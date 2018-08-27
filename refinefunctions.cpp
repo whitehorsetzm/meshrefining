@@ -484,20 +484,18 @@ int updateTriIndex(HYBRID_MESH &mesh,map<string,int64_t>&tri_globalID)
     return 1;
 }
 
-int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMarker)
+int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMarker,table &_table)
 {
-    //HYBRID_MESH newTetrasfile;
-
-    //reset _table
-    map<int,int> temp_table;
-    map<int,int>::iterator iter;
     int p=0;
-    for(iter=_table.subject_table.begin();iter!=_table.subject_table.end();++iter){
-        temp_table[p++]=iter->second;
-    }
-    _table.subject_table=temp_table;
-   // cout<<"p="<<p<<endl;
-
+    //HYBRID_MESH newTetrasfile;
+    //reset _table
+//    map<int,int> temp_table;
+//    map<int,int>::iterator iter;
+//    int p=0;
+//    for(iter=_table.subject_table.begin();iter!=_table.subject_table.end();++iter){
+//        temp_table[p++]=iter->second;
+//    }
+//    _table.subject_table=temp_table;
 
 
     //delete the self Procs
@@ -515,8 +513,6 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
         lines.push_back(IntToString(v[1])+"_"+IntToString(v[2]));
         lines.push_back(IntToString(v[0])+"_"+IntToString(v[2]));
     }  //#add
-   // cout<<"nfacts="<<tetrasfile.NumTetras<<endl;
-  // cout<<"lines.size()="<<lines.size()<<endl;
     set<int>::iterator setIter;
     for(int i=0;i<tetrasfile.NumNodes;i++)
     {
@@ -552,8 +548,9 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
     int mid=-1;
     int face_id_1=-1;
     int face_id_2=-1;
+    int patch_id_1=-1;
+    int patch_id_2=-1;
     string temp;
-    int n=0,m=0,l=0;
     pair<string,newNode> edgePair;
     vector<string>::iterator strIter;
     vector<int> face_id;  //this is local id?
@@ -584,29 +581,24 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
 
 
                }//#add
-               if(face_id.size()==0)
-                   n++;
-               else if(face_id.size()==2)
-                   m++;
-               else
-                   l++;
-              // cout<<"n="<<n<<"m="<<m<<"l="<<l<<endl;
-             //   cout<<_table.subject_table[]<<endl;
                if(face_id.size()>1){
                for(int k=0;k<face_id.size()-1;++k){
-                   if(_table.subject_table[face_id[k]]!=_table.subject_table[face_id[k+1]])
-                   {
-                       face_id_1=face_id[k];
-                       face_id_2=face_id[k+1];
+//                   if(_table.subject_table[face_id[k]]!=_table.subject_table[face_id[k+1]])
+//                   {
+//                       face_id_1=face_id[k];
+//                       face_id_2=face_id[k+1];
+//                       break;
+//                   }
+                   if(tetrasfile.pTris[face_id[k]].iSurface!=tetrasfile.pTris[face_id[k+1]].iSurface){
+                       patch_id_1=tetrasfile.pTris[face_id[k]].iSurface;
+                       patch_id_2=tetrasfile.pTris[face_id[k+1]].iSurface;
                        break;
                    }
-                   face_id_1=face_id_2=face_id[k];
+                   patch_id_1=patch_id_2=tetrasfile.pTris[face_id[k]].iSurface;
                }
                }    //simple judge
-            //   cout<<face_id_1<<" "<<face_id_2<<endl;
                face_id.clear();
             //#add
-
             if(edgeHash.find(temp)!=edgeHash.end())
             {
                 //find it, do nothing
@@ -616,7 +608,6 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                 //not found
                 edgePair.first=temp;
                 newNode nodetemp;
-
                 nodetemp.localID=NumNewNodes;
                 NumNewNodes++;
                 nodetemp.coord=tetrasfile.nodes[startID].coord+tetrasfile.nodes[endID].coord;
@@ -624,27 +615,31 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                 double old_x=nodetemp.coord.x;
                 double old_y=nodetemp.coord.y;
                 double old_z=nodetemp.coord.z;
-                //cout<<"test here"<<endl;
-                //cout<<face_id_1<<endl;
-               // cout<<_table.subject_table.size()<<endl;
-                //cout<<"old ="<<nodetemp.coord.x<<" "<<nodetemp.coord.y<<" "<<nodetemp.coord.z<<endl;
-                if(face_id_1!=-1){
-                //    cout<<"changed"<<endl;
-                nodetemp.coord=_table.subject(face_id_1,face_id_2,nodetemp.coord);//#add
+         //       cout<<"patch_id_2  "<<patch_id_2<<"  patch_id_1  "<<patch_id_1<<endl;
+          //      cout<<++p<<endl;
+                double k,l;
+                Vector vec(0,0,0);
+
+
+      //          if(patch_id_2!=-1)
+      //         cout<<data_surface[patch_id_2].destroy();
+      //              cout<<p++<<endl;
+
+                if(patch_id_2!=-1&&patch_id_1!=-1){
+                nodetemp.coord=_table.subject_patch_id(patch_id_2,patch_id_1,nodetemp.coord);//#add
                 }
-                //cout<<"test2 here"<<endl;
+
                 double new_x=nodetemp.coord.x;
                 double new_y=nodetemp.coord.y;
                 double new_z=nodetemp.coord.z;
-                //cout<<"new ="<<nodetemp.coord.x<<" "<<nodetemp.coord.y<<" "<<nodetemp.coord.z<<endl;
                 double test_x=fabs(old_x-new_x);
                 double test_y=fabs(old_y-new_y);
                 double test_z=fabs(old_z-new_z);
-                if(test_x>0.1||test_y>0.1||test_z>0.1){
+                if(test_x<0.1&&test_y<0.1&&test_z<0.1){
 
-                    cout<<_table.subject_table[face_id_1]<<"    "<<_table.subject_table[face_id_2]<<endl;
-                   cout<<"old ="<<old_x<<" "<<old_x<<" "<<old_z<<endl;
-                    cout<<"new ="<<new_x<<" "<<new_y<<" "<<new_z<<endl;
+//                    cout<<_table.subject_table[face_id_1]<<"    "<<_table.subject_table[face_id_2]<<endl;
+//                   cout<<"old ="<<old_x<<" "<<old_y<<" "<<old_z<<endl;
+//                    cout<<"new ="<<new_x<<" "<<new_y<<" "<<new_z<<endl;
 //                    nodetemp.coord.x=old_x;
 //                    nodetemp.coord.y=old_y;
 //                    nodetemp.coord.z=old_z;
@@ -655,6 +650,8 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
 
                 face_id_1=-1;
                 face_id_2=-1;
+                patch_id_1=-1;
+                patch_id_2=-1;
                 edgePair.second=nodetemp;
                 edgeHash.insert(edgePair);
             }
@@ -663,9 +660,10 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
         // cout<<"test here"<<endl;
 
      }
+
      newTetrasfile.NumNodes=NumNewNodes;
     newTetrasfile.nodes=new Node[NumNewNodes];
-
+   // cout<<"test here"<<endl;
     //---------------//锟斤拷锟斤拷锟铰憋拷锟斤拷锟斤拷锟斤拷锟侥斤拷锟斤拷锟斤拷息 //---------------///
     for(int i=0;i<NumNodes;i++)
     {
@@ -705,10 +703,7 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
     setupCellNeig(newTetrasfile.NumNodes,newTetrasfile.NumTetras,newTetrasfile.pTetras);//local
 
     findiCellFast(newTetrasfile);
-
-
-
-
+    writeVTKFile("TEST.vtk", newTetrasfile);
 
     return 1;
 }
@@ -871,20 +866,27 @@ int sixNodesPattern(HYBRID_MESH &oldmesh, HYBRID_MESH &newmesh, map<string, newN
     for(int i=0;i<oldmesh.NumTris;i++)
     {
         //NO1
-        int d_patch_id=_table.detach_face(i);
+        //int d_patch_id=_table.detach_face(i);
         newmesh.pTris[count]=oldmesh.pTris[i];
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].vertices[0];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[2];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[1];
-        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
-
+    //    cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
+//        if(newmesh.pTris[count].iOppoProc==-1)
+//        {
+//            _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
+//        }
         count++;
         //NO2
         newmesh.pTris[count]=oldmesh.pTris[i];
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].vertices[1];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[0];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[2];
-        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
+ //       cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
+//        if(newmesh.pTris[count].iOppoProc==-1)
+//       { _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
+
+//        }
 
         count++;
         //NO3
@@ -892,14 +894,18 @@ int sixNodesPattern(HYBRID_MESH &oldmesh, HYBRID_MESH &newmesh, map<string, newN
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].vertices[2];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[1];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[0];
-        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
+  //      cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
+//        if(newmesh.pTris[count].iOppoProc==-1)
+//        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
         count++;
         //NO4
         newmesh.pTris[count]=oldmesh.pTris[i];
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].addedNodes[0];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[1];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[2];
-        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
+ //       cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
+//        if(newmesh.pTris[count].iOppoProc==-1)
+//        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
         count++;
     }
 
@@ -1444,11 +1450,10 @@ int managerProc(int rank, int nparts, HYBRID_MESH*tetrasPart, HYBRID_MESH& const
     offset=0;
     for(int i=0;i<nparts;i++)
     {
-        sendcounts[i]=tetrasPart[i].NumTris*2;
+        sendcounts[i]=tetrasPart[i].NumTris*3;
         displs[i]=offset;//need to check
-        offset+=tetrasPart[i].NumTris*2;
-
-        sumTris+=tetrasPart[i].NumTris*2;
+        offset+=tetrasPart[i].NumTris*3;
+        sumTris+=tetrasPart[i].NumTris*3;
         // count=count+tetrasPart[i].NumNodes;
     }
 
@@ -1458,18 +1463,19 @@ int managerProc(int rank, int nparts, HYBRID_MESH*tetrasPart, HYBRID_MESH& const
     {
         for(int j=0;j<tetrasPart[i].NumTris;j++)
         {
-            attributs[count*2+0]=tetrasPart[i].pTris[j].iSurf;
-            attributs[count*2+1]=tetrasPart[i].pTris[j].iOppoProc;
+            attributs[count*3+0]=tetrasPart[i].pTris[j].iSurf;
+            attributs[count*3+1]=tetrasPart[i].pTris[j].iOppoProc;
+            attributs[count*3+2]=tetrasPart[i].pTris[j].iSurface;
             count++;
         }
     }
-    assert(count==sumTris/2);
+    assert(count==sumTris/3);
 
-    cout<<"Triangle Number is: "<<sumTris/2<<endl;
+    cout<<"Triangle Number is: "<<sumTris/3<<endl;
 
-    int *recvAttr=new int[2*construcTetras.NumTris];
+    int *recvAttr=new int[3*construcTetras.NumTris];
 
-    recvNum=construcTetras.NumTris*2;
+    recvNum=construcTetras.NumTris*3;
 
     MPI_Scatterv(attributs,sendcounts,displs,MPI_INT,recvAttr,recvNum,MPI_INT,rank,comm);//send the tris  ;//send the tris attributes
 
@@ -1479,8 +1485,9 @@ int managerProc(int rank, int nparts, HYBRID_MESH*tetrasPart, HYBRID_MESH& const
     attributs=nullptr;
     for(int i=0;i<construcTetras.NumTris;i++)
     {
-        construcTetras.pTris[i].iSurf=recvAttr[i*2+0];
-        construcTetras.pTris[i].iOppoProc=recvAttr[i*2+1];
+        construcTetras.pTris[i].iSurf=recvAttr[i*3+0];
+        construcTetras.pTris[i].iOppoProc=recvAttr[i*3+1];
+        construcTetras.pTris[i].iSurface=recvAttr[i*3+2];
 
     }
 
@@ -1686,10 +1693,10 @@ int workerProc(int rank, HYBRID_MESH&construcTetras, int &refineSize, vector<str
         vTris=nullptr;
     }
 
-    int attributs[2];
+    int attributs[3];
 
 
-    recvNum=construcTetras.NumTris*2;
+    recvNum=construcTetras.NumTris*3;
 
     int *recvAttr=new int[recvNum];
 
@@ -1700,8 +1707,9 @@ int workerProc(int rank, HYBRID_MESH&construcTetras, int &refineSize, vector<str
 
     for(int i=0;i<construcTetras.NumTris;i++)
     {
-        construcTetras.pTris[i].iSurf=recvAttr[i*2+0];
-        construcTetras.pTris[i].iOppoProc=recvAttr[i*2+1];
+        construcTetras.pTris[i].iSurf=recvAttr[i*3+0];
+        construcTetras.pTris[i].iOppoProc=recvAttr[i*3+1];
+        construcTetras.pTris[i].iSurface=recvAttr[i*3+2];
 
     }
 

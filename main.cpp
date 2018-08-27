@@ -8,6 +8,7 @@
 #include "boundary.h"
 #include "dataclass.h"
 #define VTK_OUTPUT;
+#define DEBUG
 using namespace std;
 
 struct Arguments
@@ -120,6 +121,7 @@ int main(int argc, char *argv[])
 
     HYBRID_MESH newTetrasfile;
     HYBRID_MESH construcTetras;
+    table _table;
 
     Arguments arguments(size);
     if (!checkArgs(argc, const_cast<const char**>(argv), arguments))
@@ -161,22 +163,12 @@ int main(int argc, char *argv[])
   //  size=2;
     if (rank == 0)
     {
-//        std::map<int,int>::iterator it;
-//        it = _table.subject_table.begin();
-//        while(it !=_table.subject_table.end())
-//        {
-//            cout<<it->first<<"  " <<it->second<<endl;
-//            it ++;
-//        }
-         //cout<<_table.subject_table.size()<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
         char CGNSfile[256];
         strcpy(CGNSfile, filename);
         strcat(CGNSfile, ".cgns");
         cout<<CGNSfile<<endl;
-
         readCGNS(CGNSfile,tetrasfile,bcstring);
-        _table.initial("ring_out_cf.gm3",tetrasfile);
-        cout<<"test"<<endl;
+        _table.initial("test.gm3",tetrasfile);
         setupCellNeig(tetrasfile.NumNodes,tetrasfile.NumTetras,tetrasfile.pTetras);
         findiCellFast(tetrasfile);
        // exit(1);
@@ -186,11 +178,11 @@ int main(int argc, char *argv[])
         tetrasfile.NumUniqueSurfFacets=tetrasfile.NumTris;
 
         int nparts=size;
-
         if (expectVolume != 0)
             refineTimes = expectVolume/tetrasfile.NumTetras/8;
 
         meshParts = new HYBRID_MESH [nparts];
+
         partition(tetrasfile,meshParts,nparts);
 
 
@@ -201,7 +193,6 @@ int main(int argc, char *argv[])
 
    //     exit(1);
         managerProc(rank,nparts,meshParts,construcTetras,refineTimes,bcstring,MPI_COMM_WORLD);
-
         delete []meshParts;
         meshParts=nullptr;
 
@@ -234,7 +225,8 @@ int main(int argc, char *argv[])
     {
         if(refinedMesh!=nullptr)
             refinedMesh->clear();
-        meshRefining(*originalMesh, *refinedMesh, rank);
+        cout<<"originalMesh->NumNodes"<<originalMesh->NumNodes<<endl;
+        meshRefining(*originalMesh, *refinedMesh, rank,_table);
         unifyBoundaries(*originalMesh, *refinedMesh, MPI_COMM_WORLD);
         if (rank == 0)
             printf("The %d-th refining finished.\n", i + 1);
@@ -331,9 +323,7 @@ int main(int argc, char *argv[])
 
         sprintf(outputName,"%s%d%s",filename,i * size + rank,"final.vtk");
         cout<<filename<<endl;
-
         writeVTKFile(outputName, meshParts[i]);
-
         sprintf(outputName,"%s%d%s",filename,i * size + rank, "surface_final.vtk");
         writeTriangleVTKFile(outputName, meshParts[i]);
         cout<<"output vtk..."<<endl;

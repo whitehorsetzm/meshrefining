@@ -47,15 +47,17 @@ public:
     }
     void initial(char *gm3file,HYBRID_MESH& mesh);//表的初始化可以通过subject()函数获取一个点离每个几何面的距离（或者点离一个几何面的环的距离），选取最近的。最后我们要通过点与面的关系得到
     //面与面的关系，于是我们需要一个数据结构来保存这个结果等待处理。
+    Vector subject_test(int patch_ID_1,int patch_ID_2,Vector coord);
     void attach_face(int face_ID,int patch_ID);
     int detach_face(int face_ID);
-    Vector subject(int face_ID_1,int face_ID_2,Vector coord);
+    Vector subject_face_id(int face_ID_1,int face_ID_2,Vector coord);
+    Vector subject_patch_id(int patch_ID_1,int patch_ID_2,Vector coord);
     FergusonCurve* findcurve(int patch_id_1,int patch_id_2,Vector coord);
      map<int,int> subject_table;
     FergusonSurface *sufaces;
     FergusonCurve   *curves;
 };
-extern table _table;
+//extern table _table;
 class temp{
 public:
     int patch_id;

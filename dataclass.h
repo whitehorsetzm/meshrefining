@@ -61,6 +61,7 @@ public:
         index=-1;
         iCell=-1;
         iSurf=-1;
+        iSurface=-1;
         iOppoProc=-1;
         partMarker=-1;
         for(int i=0;i<NoEdges;i++)
@@ -76,10 +77,12 @@ public:
     FACET& operator =(const FACET &facet);
 
 	idx_t index;
+    int localID;
 	// int iCell; // the id of the element which contains this facet
     int iCell; // the local id of the element which contains this facet
 	// bool bInterface; // true for interface, false for boundary facet.      //not used
     int iSurf; // the geometric surface index
+    int iSurface;
     int iOppoProc; // the processor index of its neighbour
 	// int iOppoIndex; // the local index of the facet on its neighboring processor  //not used
     int addedNodes[NoEdges];
@@ -92,8 +95,10 @@ template <int NoVertices,int NoEdges>
 FACET<NoVertices,NoEdges>& FACET<NoVertices,NoEdges>::operator =(const FACET<NoVertices,NoEdges>&facet)
 {
     index=facet.index;
+    localID=facet.localID;
     iCell=facet.iCell;
     iSurf=facet.iSurf;
+    iSurface=facet.iSurface;
     iOppoProc=facet.iOppoProc;
     partMarker=facet.partMarker;
     for(int i=0;i<NoVertices;i++)

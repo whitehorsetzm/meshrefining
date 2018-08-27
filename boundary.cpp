@@ -5,7 +5,7 @@
 #include <vector>
 #include "boundary.h"
 #include "lookup_table.h"
-
+#include <iostream>
 using std::map;
 using std::multimap;
 using std::set;
@@ -85,12 +85,13 @@ static bool unifyCells(HYBRID_MESH& refinedMesh, MPI_Comm comm)
 		printf("=========================\n");
 	printf("#%d: unifyCells started.\n", rank);
 	fflush(stdout);
-
 	idx_t numCells = refinedMesh.numOfCells();
 	printf("#%d: %lld Cells, %lld tetras.\n", rank, numCells, refinedMesh.NumTetras);
 
+    // MPI_Barrier(comm);
+
 	idx_t offset = numCells;
-	MPI_Scan(&numCells, &offset, 1, MPI_LONG_LONG_INT, MPI_SUM, comm);
+    MPI_Scan(&numCells, &offset, 1, MPI_LONG_LONG_INT, MPI_SUM, comm);
 	offset -= numCells;
 
 #ifdef DEBUG

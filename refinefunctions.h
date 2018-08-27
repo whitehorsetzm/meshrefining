@@ -9,7 +9,7 @@
 #include "mshgen3d_def.h"
 #include "reflection.h"
 using namespace std;
-
+class table;
 class newNode
 {
 public:
@@ -39,7 +39,8 @@ int partition(HYBRID_MESH&tetrasfile, HYBRID_MESH *tetrasPart, int nparts,int st
 
 int sortPointsID(HYBRID_MESH&mesh);
 
-int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMarker);
+
+int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMarker,table &_table);
 
 
 
