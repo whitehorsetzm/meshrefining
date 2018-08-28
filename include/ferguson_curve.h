@@ -53,6 +53,7 @@ enum EndCondition
 class FergusonCurve : public Curve
 {
 public:
+  int flag;
 	/* -------------------------------------------------------------------
 	 * 构造函数和析构函数
 	 * -----------------------------------------------------------------*/
@@ -84,6 +85,7 @@ public:
 	 * -----------------------------------------------------------------*/
 	Vector start_coord();
 	Vector end_coord();
+    void get_box(double x[2],double y[2],double z[2]);
 
 	/* --------------------------------------------------------------------
 	 * 通过参数值获取相应点坐标的
@@ -332,7 +334,7 @@ protected:
 	 * 描述：
 	 *     在调用curve_seg_d1_module之前，需要调用该函数设置对应的系数
 	 * -------------------------------------------------------------------*/
-	static int set_cur_d1_module_coeff(FergusonCurve * curve, int iseg)
+    static int set_cur_d1_modue_coeff(FergusonCurve * curve, int iseg)
 	{
 		assert(curve && curve->cv_seg_d1_module_coeff);
 		memcpy(cur_seg_d1_module_coeff, &(curve->cv_seg_d1_module_coeff[5*iseg]), 
