@@ -53,9 +53,11 @@ public:
     Vector subject_face_id(int face_ID_1,int face_ID_2,Vector coord);
     Vector subject_patch_id(int patch_ID_1,int patch_ID_2,Vector coord);
     FergusonCurve* findcurve(int patch_id_1,int patch_id_2,Vector coord);
+    int findsurface(int curve_id_1,int curve_id_2,int curve_id_3,Vector vector);
      map<int,int> subject_table;
     FergusonSurface *sufaces;
     FergusonCurve   *curves;
+
 };
 //extern table _table;
 class temp{

@@ -27,7 +27,7 @@ void datainitail(char *gm3file,HYBRID_MESH& mesh){
     double u,v;
     Vector coord;
     double distance,min,cls_u;
-    double vol=0.05;
+    double vol=0.005;
     int k,f[nf],m=0;
     ref_table=new temp[mesh.NumNodes];
 
@@ -181,8 +181,6 @@ for(int i=0;i<nf;++i){
             data_surface[i].project(mesh.nodes[j].coord,&u,&v);
             data_surface[i].param_to_coord(u,v,&coord);
 //                cout<<"i"<<i<<endl;
-//            if(i=-52)
-//                cout<<coord.getDistance(mesh.nodes[*k].coord)<<"?????????????????"<<endl;    //problem;
             if(coord.getDistance(mesh.nodes[j].coord)<vol&&_vertex[j].flag==-1)
             {
                 _vertex[j].flag=i;
@@ -470,11 +468,18 @@ void table::initial(char *gm3file,HYBRID_MESH& mesh)
         int patch_id1=ref_table[mesh.pTris[i].vertices[0]].patch_id;
         int patch_id2=ref_table[mesh.pTris[i].vertices[1]].patch_id;
         int patch_id3=ref_table[mesh.pTris[i].vertices[2]].patch_id;
-        cout<<patch_id1<<" "<<patch_id2<<" "<<patch_id3<<endl;
+        //cout<<patch_id1<<" "<<patch_id2<<" "<<patch_id3<<endl;
         if(patch_id1!=-1&&patch_id2!=-1&&patch_id3!=-1)
         {
             face_patch[i]=patch_id1;
         }
+        else if(patch_id1==-1&&patch_id2==-1&&patch_id3==-1)
+     {
+          Vector vec=(mesh.nodes[mesh.pTris[i].vertices[0]].coord+mesh.nodes[mesh.pTris[i].vertices[1]].coord+mesh.nodes[mesh.pTris[i].vertices[2]].coord)/3;
+          face_patch[i]=findsurface(ref_table[mesh.pTris[i].vertices[0]].curve_id,ref_table[mesh.pTris[i].vertices[1]].curve_id,ref_table[mesh.pTris[i].vertices[2]].curve_id,vec);
+
+         cout<<ref_table[mesh.pTris[i].vertices[0]].curve_id<<"  "<<ref_table[mesh.pTris[i].vertices[1]].curve_id<<" "<<ref_table[mesh.pTris[i].vertices[2]].curve_id<<endl;
+     }
         else if(patch_id1==-1){
             if(patch_id2==-1)
                 face_patch[i]=patch_id3;
@@ -499,8 +504,7 @@ void table::initial(char *gm3file,HYBRID_MESH& mesh)
             else
             face_patch[i]=patch_id1;
         }
-        else
-            face_patch[i]=-1;
+
     }
 
     for(int i=0;i<mesh.NumTris;++i){
@@ -609,7 +613,7 @@ Vector table::subject_face_id(int face_ID_1,int face_ID_2,Vector coord)
 FergusonCurve* table::findcurve(int patch_id_1, int patch_id_2,Vector coord)
 {
     FergusonCurve *temp=new FergusonCurve;
-    cout<<"patch_id_1="<<patch_id_1<<"patch_id_2="<<patch_id_2<<endl;
+  //  cout<<"patch_id_1="<<patch_id_1<<"patch_id_2="<<patch_id_2<<endl;
   //  cout<<gbsolid.loop_G[patch_id_1].nlc<<"  "<<gbsolid.loop_G[patch_id_2].nlc<<endl;
     for(int i=0;i<gbsolid.loop_G[patch_id_1].nlc;++i){
        for(int j=0;j<gbsolid.loop_G[patch_id_2].nlc;++j){
@@ -629,3 +633,43 @@ FergusonCurve* table::findcurve(int patch_id_1, int patch_id_2,Vector coord)
     }
     return nullptr;
 }
+
+int table::findsurface(int curve_id_1, int curve_id_2, int curve_id_3,Vector vector)
+{
+    int a=0,b=0,c=0;
+    double u,v;
+    Vector coord;
+    for(int i=0;i<gbsolid.nloops_G;++i){
+        for(int j=0;j<gbsolid.loop_G[i].nlc;++j)
+        {
+            if(gbsolid.loop_G[i].cp_t[j]->index==curve_id_1)
+                             a=1;
+            if(gbsolid.loop_G[i].cp_t[j]->index==curve_id_2)
+                             b=1;
+            if(gbsolid.loop_G[i].cp_t[j]->index==curve_id_3)
+                             c=1;
+        }
+        if(a&&b&&c)
+        {
+            data_surface[i].project(vector,&u,&v);
+            data_surface[i].param_to_coord(u,v,&coord);
+            if(coord.getDistance(vector)<1)
+               {
+                cout<<"surface : "<<i<<endl;
+                return i;
+            }
+        }
+        else if(i==gbsolid.nloops_G)
+        {
+            cout<<"surface : -1"<<endl;
+            cout<<"1   can't find surface!!!!!!!"<<endl;
+            return -1;
+
+        }
+        a=0;b=0;c=0;
+    }
+    cout<<"surface : -1"<<endl;
+    cout<<"2   can't find surface!!!!!!!"<<endl;
+    return -1;
+}
+
