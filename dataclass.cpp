@@ -9,6 +9,7 @@ Node::Node()
     coord.x=0;
     coord.y=0;
     coord.z=0;
+    flag=0;
     procs.clear();
     NumProcs=procs.size();
     partMarker=-1;

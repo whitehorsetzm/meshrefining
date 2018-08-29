@@ -617,9 +617,6 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                 double old_z=nodetemp.coord.z;
          //       cout<<"patch_id_2  "<<patch_id_2<<"  patch_id_1  "<<patch_id_1<<endl;
           //      cout<<++p<<endl;
-                double k,l;
-                Vector vec(0,0,0);
-
 
       //          if(patch_id_2!=-1)
       //         cout<<data_surface[patch_id_2].destroy();
@@ -635,7 +632,7 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                 double test_x=fabs(old_x-new_x);
                 double test_y=fabs(old_y-new_y);
                 double test_z=fabs(old_z-new_z);
-                if(test_x<0.1&&test_y<0.1&&test_z<0.1){
+//                if(test_x>0.1||test_y>0.1||test_z>0.1){
 
 //                    cout<<_table.subject_table[face_id_1]<<"    "<<_table.subject_table[face_id_2]<<endl;
 //                   cout<<"old ="<<old_x<<" "<<old_y<<" "<<old_z<<endl;
@@ -644,7 +641,7 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
 //                    nodetemp.coord.y=old_y;
 //                    nodetemp.coord.z=old_z;
 
-                }
+//                }
 
 
 

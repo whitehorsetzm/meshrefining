@@ -204,6 +204,7 @@ public:
 	int partMarker;
     Vector coord;
     int localID;
+    int flag;
 
     set<int> procs;
     int NumProcs;
