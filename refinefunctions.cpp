@@ -592,9 +592,13 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                    if(tetrasfile.pTris[face_id[k]].iSurface!=tetrasfile.pTris[face_id[k+1]].iSurface){
                        patch_id_1=tetrasfile.pTris[face_id[k]].iSurface;
                        patch_id_2=tetrasfile.pTris[face_id[k+1]].iSurface;
+                       face_id_1=face_id[k];
+                       face_id_2=face_id[k+1];
                        break;
                    }
                    patch_id_1=patch_id_2=tetrasfile.pTris[face_id[k]].iSurface;
+                   face_id_1=face_id[k];
+                   face_id_2=face_id[k];
                }
                }    //simple judge
                face_id.clear();
@@ -623,6 +627,7 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
       //              cout<<p++<<endl;
 
                 if(patch_id_2!=-1&&patch_id_1!=-1){
+                    cout<<"face_id_1 "<<face_id_1<<" face_id_2 "<<face_id_2<<endl;
                 nodetemp.coord=_table.subject_patch_id(patch_id_2,patch_id_1,nodetemp.coord);//#add
                 }
 

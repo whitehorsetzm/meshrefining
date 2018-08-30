@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
         strcat(CGNSfile, ".cgns");
         cout<<CGNSfile<<endl;
         readCGNS(CGNSfile,tetrasfile,bcstring);
-        _table.initial("test.gm3",tetrasfile);
+        _table.initial("ring_out_cf.gm3",tetrasfile);
         setupCellNeig(tetrasfile.NumNodes,tetrasfile.NumTetras,tetrasfile.pTetras);
         findiCellFast(tetrasfile);
        // exit(1);
