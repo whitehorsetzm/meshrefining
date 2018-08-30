@@ -627,8 +627,10 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
       //              cout<<p++<<endl;
 
                 if(patch_id_2!=-1&&patch_id_1!=-1){
-                    cout<<"face_id_1 "<<face_id_1<<" face_id_2 "<<face_id_2<<endl;
+                    Vector t=nodetemp.coord;
                 nodetemp.coord=_table.subject_patch_id(patch_id_2,patch_id_1,nodetemp.coord);//#add
+                if(t==nodetemp.coord)
+                    cout<<"face_id_1 "<<face_id_1<<" face_id_2 "<<face_id_2<<endl;
                 }
 
                 double new_x=nodetemp.coord.x;
