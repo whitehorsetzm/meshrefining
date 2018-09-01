@@ -20,6 +20,7 @@ struct Arguments
     { }
 
     const char *caseName;
+    const char *gmName;
     int expectedVol;
     int refineTimes;
     int nOutputParts;
@@ -74,6 +75,9 @@ static bool checkArgs(const int argc, const char *argv[], Arguments& arguments)
             int count = sscanf(argv[++i], "%d", &arguments.nOutputParts);
             if (count != 1)
                 error = true;
+        } else if (!strcmp(argv[i], "-g") || !strcmp(argv[i], "--read-geometry"))
+        {
+            arguments.gmName=argv[++i];
         }
 
         if (error)
@@ -121,8 +125,7 @@ int main(int argc, char *argv[])
 
     HYBRID_MESH newTetrasfile;
     HYBRID_MESH construcTetras;
-    table _table;
-
+    Refletion ref;
     Arguments arguments(size);
     if (!checkArgs(argc, const_cast<const char**>(argv), arguments))
     {
@@ -132,11 +135,14 @@ int main(int argc, char *argv[])
 
     char filename[256];
     char filenameBC[256];
-
     sprintf(filename, "%s", arguments.caseName);
+
+
+
     int refineTimes = arguments.refineTimes;
     int expectVolume = arguments.expectedVol;
     int nOutputParts = arguments.nOutputParts;
+
 
     // cout<<expectVolume<<endl;
     // cout<<filename<<endl;
@@ -164,11 +170,19 @@ int main(int argc, char *argv[])
     if (rank == 0)
     {
         char CGNSfile[256];
+       char GM3file[256];
         strcpy(CGNSfile, filename);
         strcat(CGNSfile, ".cgns");
         cout<<CGNSfile<<endl;
         readCGNS(CGNSfile,tetrasfile,bcstring);
-        _table.initial("ring_out_cf.gm3",tetrasfile);
+        if(arguments.gmName!=nullptr){
+            char gm3name[256];
+        sprintf(gm3name, "%s", arguments.gmName);
+            strcpy(GM3file, gm3name);
+            strcat(GM3file, ".gm3");
+            cout<<GM3file<<endl;
+            ref.initial(GM3file,tetrasfile);
+        }
         setupCellNeig(tetrasfile.NumNodes,tetrasfile.NumTetras,tetrasfile.pTetras);
         findiCellFast(tetrasfile);
        // exit(1);
@@ -226,7 +240,11 @@ int main(int argc, char *argv[])
         if(refinedMesh!=nullptr)
             refinedMesh->clear();
         cout<<"originalMesh->NumNodes"<<originalMesh->NumNodes<<endl;
-        meshRefining(*originalMesh, *refinedMesh, rank,_table);
+        if(arguments.caseName!=nullptr)
+        meshRefining(*originalMesh, *refinedMesh, rank,ref);
+        else
+        meshRefining(*originalMesh, *refinedMesh, rank);
+
         unifyBoundaries(*originalMesh, *refinedMesh, MPI_COMM_WORLD);
         if (rank == 0)
             printf("The %d-th refining finished.\n", i + 1);

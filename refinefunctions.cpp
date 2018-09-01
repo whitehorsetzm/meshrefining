@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include "mpi.h"
+#include "algorithm"
 using namespace std;
 
 
@@ -483,36 +484,11 @@ int updateTriIndex(HYBRID_MESH &mesh,map<string,int64_t>&tri_globalID)
     }
     return 1;
 }
-
-int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMarker,table &_table)
+int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMarker)
 {
-    int p=0;
     //HYBRID_MESH newTetrasfile;
-    //reset _table
-//    map<int,int> temp_table;
-//    map<int,int>::iterator iter;
-//    int p=0;
-//    for(iter=_table.subject_table.begin();iter!=_table.subject_table.end();++iter){
-//        temp_table[p++]=iter->second;
-//    }
-//    _table.subject_table=temp_table;
-
 
     //delete the self Procs
-    vector<string> lines;
-    int v[3];
-
-    for(int i=0;i<tetrasfile.NumTris;i++)
-    {
-        v[0]=tetrasfile.pTris[i].vertices[0];  //i is local id?
-        v[1]=tetrasfile.pTris[i].vertices[1];
-        v[2]=tetrasfile.pTris[i].vertices[2];
-        sort(v,v+3);
-      //  cout<<v[0]<<" "<<v[1]<<" "<<v[2]<<endl;
-        lines.push_back(IntToString(v[0])+"_"+IntToString(v[1]));
-        lines.push_back(IntToString(v[1])+"_"+IntToString(v[2]));
-        lines.push_back(IntToString(v[0])+"_"+IntToString(v[2]));
-    }  //#add
     set<int>::iterator setIter;
     for(int i=0;i<tetrasfile.NumNodes;i++)
     {
@@ -546,14 +522,8 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
     int startID=-1;
     int endID=-1;
     int mid=-1;
-    int face_id_1=-1;
-    int face_id_2=-1;
-    int patch_id_1=-1;
-    int patch_id_2=-1;
     string temp;
     pair<string,newNode> edgePair;
-    vector<string>::iterator strIter;
-    vector<int> face_id;  //this is local id?
     for(int i=0;i<NumElements;i++)
     {
         for(int j=0;j<6;j++)
@@ -569,40 +539,6 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                 endID=mid;
             }
             temp=IntToString(startID)+"_"+IntToString(endID);
-         //   cout<<temp<<endl;
-            strIter=lines.begin();
-               while(strIter!=lines.end()){
-                   strIter=find(strIter,lines.end(),temp);
-                   if(strIter!=lines.end())
-                   {    face_id.push_back((strIter-lines.begin())/3);//problem?strIter
-                   //    cout<<"(strIter-lines.begin())"<<(strIter-lines.begin())/3<<endl;
-                       strIter++;
-                   }
-
-
-               }//#add
-               if(face_id.size()>1){
-               for(int k=0;k<face_id.size()-1;++k){
-//                   if(_table.subject_table[face_id[k]]!=_table.subject_table[face_id[k+1]])
-//                   {
-//                       face_id_1=face_id[k];
-//                       face_id_2=face_id[k+1];
-//                       break;
-//                   }
-                   if(tetrasfile.pTris[face_id[k]].iSurface!=tetrasfile.pTris[face_id[k+1]].iSurface){
-                       patch_id_1=tetrasfile.pTris[face_id[k]].iSurface;
-                       patch_id_2=tetrasfile.pTris[face_id[k+1]].iSurface;
-                       face_id_1=face_id[k];
-                       face_id_2=face_id[k+1];
-                       break;
-                   }
-                   patch_id_1=patch_id_2=tetrasfile.pTris[face_id[k]].iSurface;
-                   face_id_1=face_id[k];
-                   face_id_2=face_id[k];
-               }
-               }    //simple judge
-               face_id.clear();
-            //#add
             if(edgeHash.find(temp)!=edgeHash.end())
             {
                 //find it, do nothing
@@ -616,42 +552,138 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                 NumNewNodes++;
                 nodetemp.coord=tetrasfile.nodes[startID].coord+tetrasfile.nodes[endID].coord;
                 nodetemp.coord=nodetemp.coord/2;
-                double old_x=nodetemp.coord.x;
-                double old_y=nodetemp.coord.y;
-                double old_z=nodetemp.coord.z;
-         //       cout<<"patch_id_2  "<<patch_id_2<<"  patch_id_1  "<<patch_id_1<<endl;
-          //      cout<<++p<<endl;
+                edgePair.second=nodetemp;
 
-      //          if(patch_id_2!=-1)
-      //         cout<<data_surface[patch_id_2].destroy();
-      //              cout<<p++<<endl;
+                edgeHash.insert(edgePair);
+            }
+        }
 
-                if(patch_id_2!=-1&&patch_id_1!=-1){
-                    Vector t=nodetemp.coord;
-                nodetemp.coord=_table.subject_patch_id(patch_id_2,patch_id_1,nodetemp.coord);//#add
-                if(t==nodetemp.coord)
-                    cout<<"face_id_1 "<<face_id_1<<" face_id_2 "<<face_id_2<<endl;
+    }
+
+    newTetrasfile.NumNodes=NumNewNodes;
+    newTetrasfile.nodes=new Node[NumNewNodes];
+
+    //---------------//锟斤拷锟斤拷锟铰憋拷锟斤拷锟斤拷锟斤拷锟侥斤拷锟斤拷锟斤拷息 //---------------///
+    for(int i=0;i<NumNodes;i++)
+    {
+        newTetrasfile.nodes[i]=tetrasfile.nodes[i];//local ID
+    }
+    map<string,newNode>::iterator iter;
+
+    newNode midtemp;
+    int indextemp=-1;
+    for(iter=edgeHash.begin();iter!=edgeHash.end();iter++)
+    {
+        midtemp=iter->second;
+        indextemp=midtemp.localID;
+        newTetrasfile.nodes[indextemp].index=-1;
+        newTetrasfile.nodes[indextemp].localID=indextemp;
+        newTetrasfile.nodes[indextemp].coord=midtemp.coord;
+    }
+
+
+
+    //---------------//锟斤拷锟斤拷锟铰憋拷锟斤拷锟斤拷锟斤拷锟侥碉拷元锟斤拷息 //---------------///
+
+    int NumNewElements=NumElements*8;//one element are divide into 8 parts
+    newTetrasfile.NumTetras=NumNewElements;
+    newTetrasfile.pTetras=new TETRAS[NumNewElements];
+
+
+
+
+
+    sixNodesPattern(tetrasfile,newTetrasfile,edgeHash);
+
+    printf("oldelems=%d;newelems=%d \n",NumElements,NumNewElements);
+
+
+    //find the iCell of the triangles
+    setupCellNeig(newTetrasfile.NumNodes,newTetrasfile.NumTetras,newTetrasfile.pTetras);//local
+
+    findiCellFast(newTetrasfile);
+
+
+
+
+
+    return 1;
+}
+int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMarker,Refletion &ref)
+{
+    //delete the self Procs
+    for(int i=0;i<tetrasfile.NumNodes;i++)
+    {
+     //   set<int> &procs = tetrasfile.nodes[i].procs;
+       // for(setIter=tetrasfile.nodes[i].procs.begin();setIter!=tetrasfile.nodes[i].procs.end();)
+        tetrasfile.nodes[i].procs.erase(partMarker);
+        tetrasfile.nodes[i].NumProcs=tetrasfile.nodes[i].procs.size();
+        // assert(tetrasfile.nodes[i].procs.size() < 2);
+    }
+    map<string,newNode>edgeHash;
+
+    edgeHash.clear();
+    int NumNodes=tetrasfile.NumNodes;
+    int NumNewNodes=NumNodes;
+    int NumElements=tetrasfile.NumTetras;
+
+    int edgeID[6][2]=
+    {
+        0,1,
+        0,2,
+        0,3,
+        1,2,
+        1,3,
+        2,3
+    };
+   ref.initial_edge_table(tetrasfile);
+    int Estart=-1;
+    int Eend=-1;
+    int startID=-1;
+    int endID=-1;
+    int mid=-1;
+    string temp;
+    pair<string,newNode> edgePair;
+    for(int i=0;i<NumElements;i++)
+    {
+        for(int j=0;j<6;j++)
+        {
+            Estart=edgeID[j][0];
+            Eend=edgeID[j][1];
+            startID=tetrasfile.pTetras[i].vertices[Estart];
+            endID=tetrasfile.pTetras[i].vertices[Eend];
+            if(startID>endID)
+            {
+                mid=startID;
+                startID=endID;
+                endID=mid;
+            }
+            temp=IntToString(startID)+"_"+IntToString(endID);
+            if(edgeHash.find(temp)!=edgeHash.end())
+            {
+                //find it, do nothing
+            }
+            else
+            {
+                //not found
+                edgePair.first=temp;
+                newNode nodetemp;
+                nodetemp.localID=NumNewNodes;
+                NumNewNodes++;
+                nodetemp.coord=tetrasfile.nodes[startID].coord+tetrasfile.nodes[endID].coord;
+                nodetemp.coord=nodetemp.coord/2;
+                int face_id_1=-1;
+                int face_id_2=-1;
+                int patch_id_1;
+                int patch_id_2;
+                ref.edge_to_face(tetrasfile,face_id_1,face_id_2,temp);
+                if(face_id_1!=-1&&face_id_2!=-1){
+                  patch_id_1=tetrasfile.pTris[face_id_1].iSurface;
+                 patch_id_2=tetrasfile.pTris[face_id_2].iSurface;
                 }
-
-                double new_x=nodetemp.coord.x;
-                double new_y=nodetemp.coord.y;
-                double new_z=nodetemp.coord.z;
-                double test_x=fabs(old_x-new_x);
-                double test_y=fabs(old_y-new_y);
-                double test_z=fabs(old_z-new_z);
-//                if(test_x>0.1||test_y>0.1||test_z>0.1){
-
-//                    cout<<_table.subject_table[face_id_1]<<"    "<<_table.subject_table[face_id_2]<<endl;
-//                   cout<<"old ="<<old_x<<" "<<old_y<<" "<<old_z<<endl;
-//                    cout<<"new ="<<new_x<<" "<<new_y<<" "<<new_z<<endl;
-//                    nodetemp.coord.x=old_x;
-//                    nodetemp.coord.y=old_y;
-//                    nodetemp.coord.z=old_z;
-
-//                }
-
-
-
+                if(patch_id_2!=-1&&patch_id_1!=-1){
+                nodetemp.coord=ref.subject_patch_id(patch_id_2,patch_id_1,nodetemp.coord);//#add
+                }
                 face_id_1=-1;
                 face_id_2=-1;
                 patch_id_1=-1;
@@ -659,10 +691,7 @@ int meshRefining(HYBRID_MESH &tetrasfile,HYBRID_MESH &newTetrasfile,int partMark
                 edgePair.second=nodetemp;
                 edgeHash.insert(edgePair);
             }
-
         }
-        // cout<<"test here"<<endl;
-
      }
 
      newTetrasfile.NumNodes=NumNewNodes;
@@ -870,27 +899,16 @@ int sixNodesPattern(HYBRID_MESH &oldmesh, HYBRID_MESH &newmesh, map<string, newN
     for(int i=0;i<oldmesh.NumTris;i++)
     {
         //NO1
-        //int d_patch_id=_table.detach_face(i);
         newmesh.pTris[count]=oldmesh.pTris[i];
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].vertices[0];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[2];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[1];
-    //    cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
-//        if(newmesh.pTris[count].iOppoProc==-1)
-//        {
-//            _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
-//        }
         count++;
         //NO2
         newmesh.pTris[count]=oldmesh.pTris[i];
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].vertices[1];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[0];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[2];
- //       cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
-//        if(newmesh.pTris[count].iOppoProc==-1)
-//       { _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
-
-//        }
 
         count++;
         //NO3
@@ -898,18 +916,12 @@ int sixNodesPattern(HYBRID_MESH &oldmesh, HYBRID_MESH &newmesh, map<string, newN
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].vertices[2];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[1];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[0];
-  //      cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
-//        if(newmesh.pTris[count].iOppoProc==-1)
-//        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
         count++;
         //NO4
         newmesh.pTris[count]=oldmesh.pTris[i];
         newmesh.pTris[count].vertices[0]=oldmesh.pTris[i].addedNodes[0];
         newmesh.pTris[count].vertices[1]=oldmesh.pTris[i].addedNodes[1];
         newmesh.pTris[count].vertices[2]=oldmesh.pTris[i].addedNodes[2];
- //       cout<<"iSurf = "<<newmesh.pTris[count].iSurf<<endl;
-//        if(newmesh.pTris[count].iOppoProc==-1)
-//        _table.attach_face(oldmesh.NumTris+count,d_patch_id);//#add
         count++;
     }
 

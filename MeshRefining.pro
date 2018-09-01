@@ -42,13 +42,14 @@ HEADERS += \
     openfoamfile.h \
     boundarycondition.h \
     lookup_table.h \
-    reflection.h
+    reflection.h\
 
-LIBS += -L/usr/local/lib/ -lmetis
 INCLUDEPATH += /usr/local/include/
 LIBS += -L/usr/local/lib -L/usr/lib64/mpich-3.2/lib/ -lmpi
+LIBS += -L/usr/local/lib/ -lmetis
 INCLUDEPATH +=/usr/lib/mpich/include #$$PWD/include
 INCLUDEPATH +=/usr/include/mpich-3.2-x86_64
 unix:!macx: LIBS += -lmpi -lcgns -lhdf5 -ldl -fPIC
 INCLUDEPATH +=$$PWD/include
 LIBS += -L$$PWD/lib/ -lreflection
+#LIBS += -L$$PWD/lib/ -lrefletion
